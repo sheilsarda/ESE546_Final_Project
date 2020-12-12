@@ -1,0 +1,21 @@
+MuJoCo Pro Lab license activation key, number 6867, type 6.
+
+Issued to Prof. Takamitsu Matsubara, NAIST Japan.
+
+Expires December 17, 2020.
+
+Do not share this file with anyone other than the users covered
+by your license agreement with Roboti LLC. This file activates
+MuJoCo Pro on any computer running any supported OS.
+
+Do not modify this file. Its entire content, including the
+plain text section, is used by the activation manager.
+
+c16444cba937bd0551fd6b30282672b19afb19f09284197cbe8eb5244e127f03
+b979c0f4213f9cbe2a8671e53464eb0610215ab4ef89d33eb60406135bcc53bf
+70f8337cfee752c9dc41c6e5c0a7d624b7efa4b03dbc5c01e8aecfaf38de4dfb
+0009ac87872064fe059743fcbe5db742e5d7cced204b373464fefa3cdb070cb8
+ce37600d0549414a433670c259decbdbc7adbfcd3309520e47cbc684666019da
+3dbebd511c770949a860d3a08496b57947ea90ad007dbdd12da29c47a4e17388
+91ed7fea0fabbb7b80a58ceeb750682a144ed159a43d891aeaa86639ecaf8d8f
+c2d7285121515b6a16fa003c46caad18cc3e54c8ed199825a178b034885d8882
