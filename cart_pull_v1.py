@@ -1,12 +1,19 @@
 import torch 
 import torch.nn as nn 
 import gym  
+from collections import namedtuple 
+import torch.optim as optim
+import random
+import math
+import numpy as np
+
+import torch.nn.functional as F
 
 #setup the transition class 
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward', 'done')) 
 
 #global params
-BATCH_SIZE = 10
+BATCH_SIZE = 10 
 
 class Replay_Buffer(): 
     def __init__(self, capacity): 
@@ -30,27 +37,43 @@ class Replay_Buffer():
         return random.sample(self.storage, batch_size) 
  
 class DQN_Network(nn.Module):
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, hidden_dim1, hidden_dim2, output_dim):
         super(DQN_Network, self) .__init__()
+        
+        self.input_dim = input_dim 
+        self.hidden_dim1 = hidden_dim1
+        self.hidden_dim2 = hidden_dim2
+        self.output_dim = output_dim  
+        self.l1  = nn.Linear(self.input_dim, self.hidden_dim1)
+        self.bn1 = nn.BatchNorm(self.hidden_dim1)
+        self.l2  = nn.Linear(self.hidden_dim1, self.hidden_dim2)
+        self.bn2 = nn.BatchNorm(self.hidden_dim2)
+        self.l3  = nn.Linear(self.hidden_dim2, self.output_dim)
 
+        """       
         self.conv1  = nn.Conv2d(input_dim, 16, kernel_size=5, stride=2)
-        self.bn1    = nn.BatchNorm2d(16)
+        
         self.conv2  = nn.Conv2d(16, 32, kernel_size=5, stride=2)
         self.bn2    = nn.BatchNorm2d(32)
         self.conv3  = nn.Conv2d(32, 32, kernel_size=5, stride=2)
         self.bn3    = nn.BatchNorm2d(32)
         self.fc1    = nn.Linear(32, output_dim)
-        
-    def forward(self, x):
-        x   = F.relu(self.bn1(self.conv1(x)))
-        x   = F.relu(self.bn2(self.conv2(x)))
-        x   = F.relu(self.bn3(self.conv3(x)))
-        x   = self.fc1(x.view(x.size(0), -1))
-        return x
+        """ 
 
+    def forward(self, x):
+        # x = x.expand(x, dim=1) 
+        x = torch.unsqueeze(x, dim=1) 
+        print("x shape", x.size())
+        x = F.relu(self.bn1(self.l1(x)))
+        x = F.relu(self.bn2(self.l2(x)))
+        x = F.relu(self.bn3(self.l3(x)))
+        x = x.view(x.size(0), -1)
+        return x
+    
 class DQNAgent(): 
-    def __init__(self, input_dim, output_dim):
-        self.target_net = DQN_Network(input_dim, output_dim)
+    def __init__(self, action_dim, input_dim, output_dim): 
+        self.action_dim = action_dim
+        self.target_net = DQN_Network(input_dim, output_dim,)
         self.policy_net = DQN_Network(input_dim, output_dim)  
 
         self.eps_start = .9  
@@ -58,7 +81,7 @@ class DQNAgent():
         self.eps_decay = 200  
         self.steps_done = 0 
         
-    def select_action(self, eps):
+    def select_action(self, state):
         random_n = random.random() #generate random number
         eps_threshold = self.eps_end + (self.eps_start - self.eps_end) * \
             math.exp(-1. * self.steps_done / self.eps_decay)
@@ -102,7 +125,7 @@ def compute_loss(memory, optimizer):
     expected_state_action_vals.requires_grad = True  
     state_action_vals.requires_grad = True  
             
-    # compute loss
+    # compute Huber loss
     loss = F.smooth_l1_loss(state_action_vals, state_action_vals)
     
     ## gradient update
@@ -137,7 +160,7 @@ def train(dqn, epochs, optimizer, target_update, gamma, env, memory, render):
             counter += 1
         
         #compute running_reward here
-        loss = compute_loss(buffer, optimizer)
+        loss = compute_loss(memory, optimizer)
         loss_list.append(loss)
 
         if (ep % target_update == 0): 
@@ -148,16 +171,20 @@ def train(dqn, epochs, optimizer, target_update, gamma, env, memory, render):
         
     return rewards_list
     
-def main():
-    #testing purposes 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    dqn = DQNAgent(3, 32)    
-    env_name = "CartPole-v0"
-    env = gym.make(env_name)
-    env.reset() 
-    render = True 
-    gamma = .9  
-    replay = Replay_Buffer(1000)
-    epochs = 5
-    optimizer = optim.Adam(dqn.policy_net.parameters())
-    train(dqn, epochs, optimizer, 10, gamma, env, replay, render) 
+#testing purposes 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
+ 
+env_name = "CartPole-v0"
+env = gym.make(env_name)
+env.reset() 
+action_dim = env.action_space.n
+state_dim = env.observation_space.shape[0]
+
+dqn = DQNAgent(env, state_dim, 128, 128, action_dim)   
+
+render = True 
+gamma = .9  
+replay = Replay_Buffer(1000)
+epochs = 5
+optimizer = optim.Adam(dqn.policy_net.parameters())
+train(dqn, epochs, optimizer, 10, gamma, env, replay, render) 
