@@ -45,9 +45,9 @@ class DQN_Network(nn.Module):
         self.hidden_dim2 = hidden_dim2
         self.output_dim = output_dim  
         self.l1  = nn.Linear(self.input_dim, self.hidden_dim1)
-        self.bn1 = nn.BatchNorm(self.hidden_dim1)
+        #self.bn1 = nn.BatchNorm1d(self.hidden_dim1)
         self.l2  = nn.Linear(self.hidden_dim1, self.hidden_dim2)
-        self.bn2 = nn.BatchNorm(self.hidden_dim2)
+        #self.bn2 = nn.BatchNorm1d(self.hidden_dim2)
         self.l3  = nn.Linear(self.hidden_dim2, self.output_dim)
 
         """       
@@ -62,19 +62,19 @@ class DQN_Network(nn.Module):
 
     def forward(self, x):
         # x = x.expand(x, dim=1) 
-        x = torch.unsqueeze(x, dim=1) 
-        print("x shape", x.size())
-        x = F.relu(self.bn1(self.l1(x)))
-        x = F.relu(self.bn2(self.l2(x)))
-        x = F.relu(self.bn3(self.l3(x)))
+        x = torch.unsqueeze(x, dim=0) 
+        # print("x shape", x.size())
+        x = F.relu(self.l1(x))
+        x = F.relu(self.l2(x))
+        x = F.relu(self.l3(x))
         x = x.view(x.size(0), -1)
         return x
     
 class DQNAgent(): 
-    def __init__(self, action_dim, input_dim, output_dim): 
+    def __init__(self, input_dim, action_dim): 
         self.action_dim = action_dim
-        self.target_net = DQN_Network(input_dim, output_dim,)
-        self.policy_net = DQN_Network(input_dim, output_dim)  
+        self.target_net = DQN_Network(input_dim, 128, 128, self.action_dim)
+        self.policy_net = DQN_Network(input_dim, 128, 128, self.action_dim)  
 
         self.eps_start = .9  
         self.eps_end = .05
@@ -93,12 +93,15 @@ class DQNAgent():
         else: 
         #take the best action  
             with torch.no_grad(): 
-                actions = self.policy_net(state)  
+                # print("State:", state)
+                actions = self.policy_net(state) 
+                # print("actions.size(): ") 
+                # print(actions.size())
                 action = torch.argmax(actions).view(1, 1) 
                 
         return action.item() 
 
-def compute_loss(memory, optimizer): 
+def compute_loss(memory, model, optimizer): 
     
     # do nothing if we have not collected enough samples 
     if (len(memory.storage) < BATCH_SIZE): 
@@ -106,22 +109,28 @@ def compute_loss(memory, optimizer):
     
     mini_batch = memory.sample(BATCH_SIZE) 
     
+    state_action_vals = [] 
+    expected_state_action_vals = [] 
+    
     for state, action, next_state, reward, done in mini_batch:
         if done:
             reward = torch.tensor(reward)
             target = reward 
         else: 
-            next_state = torch.tensor((next_state)) 
+            next_state = torch.FloatTensor((next_state)) 
             next_state_values = dqn.target_net(next_state) 
+            next_state_values = torch.FloatTensor(next_state_values)
             target = reward + gamma * torch.max(next_state_values)
 
         expected_state_action_vals.append(target) 
-        q_values = dqn.policy_net(torch.tensor(state))
+        q_values = dqn.policy_net(torch.FloatTensor(state))
+        # print(q_values.size(), action)
+        q_values = q_values.view(2, 1)
         state_action_val = q_values[action]
         state_action_vals.append(state_action_val)
 
-    expected_state_action_vals = torch.tensor(expected_state_action_vals).clone().detach().requires_grad_(True)
-    state_action_vals = torch.tensor(state_action_vals) 
+    expected_state_action_vals = torch.FloatTensor(expected_state_action_vals).clone().detach().requires_grad_(True)
+    state_action_vals = torch.FloatTensor(state_action_vals) 
     expected_state_action_vals.requires_grad = True  
     state_action_vals.requires_grad = True  
             
@@ -131,8 +140,8 @@ def compute_loss(memory, optimizer):
     ## gradient update
     optimizer.zero_grad()
     loss.backward()
-    for param in model.parameters():
-        param.grad.data.clamp_(-1, 1)
+    # for param in model.parameters():
+    #     param.grad.data.clamp_(-1, 1)
 
     optimizer.step()
 
@@ -160,11 +169,11 @@ def train(dqn, epochs, optimizer, target_update, gamma, env, memory, render):
             counter += 1
         
         #compute running_reward here
-        loss = compute_loss(memory, optimizer)
+        loss = compute_loss(memory, dqn.policy_net, optimizer)
         loss_list.append(loss)
 
         if (ep % target_update == 0): 
-            dqn.target_net.load_state_dict(v.policy_net.state_dict()) 
+            dqn.target_net.load_state_dict(dqn.policy_net.state_dict()) 
 
         # do some printing here
         print("Episode: {}, Score: {}, Avg. Reward: {}".format(ep, score, score/counter))
@@ -180,7 +189,7 @@ env.reset()
 action_dim = env.action_space.n
 state_dim = env.observation_space.shape[0]
 
-dqn = DQNAgent(env, state_dim, 128, 128, action_dim)   
+dqn = DQNAgent(state_dim,  action_dim) 
 
 render = True 
 gamma = .9  
