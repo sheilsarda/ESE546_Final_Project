@@ -13,7 +13,7 @@ import torch.nn.functional as F
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward', 'done')) 
 
 #global params
-BATCH_SIZE = 10 
+BATCH_SIZE = 16
 
 class Replay_Buffer(): 
     def __init__(self, capacity): 
@@ -128,7 +128,7 @@ def compute_loss(memory, model, optimizer):
         state_action_val = q_values[action]
         state_action_vals.append(state_action_val)
 
-    expected_state_action_vals = torch.FloatTensor(expected_state_action_vals).clone().detach().requires_grad_(True)
+    expected_state_action_vals = torch.FloatTensor(expected_state_action_vals).requires_grad_(True)
     state_action_vals = torch.FloatTensor(state_action_vals) 
     expected_state_action_vals.requires_grad = True  
     state_action_vals.requires_grad = True  
@@ -157,8 +157,11 @@ def train(dqn, episodes, optimizer, target_update, gamma, env, memory, render):
         score = 0 
         done = False  
         counter = 0
-        score_list = [] 
+        
         while not done: 
+            if (render):
+                env.render()
+            
             state = preprocess_state(state)
             action = dqn.select_action(state) 
             # print("Action", action)
@@ -167,19 +170,15 @@ def train(dqn, episodes, optimizer, target_update, gamma, env, memory, render):
             score += reward 
             rewards_list.append(reward)
             state = next_state 
-            if (render):
-                env.render()
             
             counter += 1
-            score_list.append(reward)
-
+        
             # print("Counter {}".format(counter)) 
         #compute running_reward here
         running_reward = running_reward * (1 - 1/log_interval) + reward * (1/log_interval) 
         loss = compute_loss(memory, dqn.policy_net, optimizer)
         loss_list.append(loss)
         
-
         if (ep % target_update == 0): 
             dqn.target_net.load_state_dict(dqn.policy_net.state_dict()) 
 
@@ -192,6 +191,9 @@ def train(dqn, episodes, optimizer, target_update, gamma, env, memory, render):
 #device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
 #print(torch.cuda.get_device_name(0))
  
+np.random.seed(30)
+torch.random.manual_seed(30)
+
 env_name = "CartPole-v0"
 env = gym.make(env_name)
 env.reset() 
@@ -201,8 +203,8 @@ state_dim = env.observation_space.shape[0]
 dqn = DQNAgent(state_dim,  action_dim) 
 
 render = False 
-gamma = .99 
+gamma = .99
 replay = Replay_Buffer(1000)
-episodes = 500 
+episodes = 1000 
 optimizer = optim.RMSprop(dqn.policy_net.parameters())
 train(dqn, episodes, optimizer, 10, gamma, env, replay, render) 
