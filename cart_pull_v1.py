@@ -44,10 +44,8 @@ class DQN_Network(nn.Module):
         self.hidden_dim1 = hidden_dim1
         self.hidden_dim2 = hidden_dim2
         self.output_dim = output_dim  
-        self.l1  = nn.Linear(self.input_dim, self.hidden_dim1)
-        #self.bn1 = nn.BatchNorm1d(self.hidden_dim1)
-        self.l2  = nn.Linear(self.hidden_dim1, self.hidden_dim2)
-        #self.bn2 = nn.BatchNorm1d(self.hidden_dim2)
+        self.l1  = nn.Linear(self.input_dim, self.hidden_dim1) 
+        self.l2  = nn.Linear(self.hidden_dim1, self.hidden_dim2) 
         self.l3  = nn.Linear(self.hidden_dim2, self.output_dim)
 
         """       
@@ -88,8 +86,10 @@ class DQNAgent():
         self.steps_done += 1  
 
         if (random_n < eps_threshold): 
-        #take random action (random # betwee 0 and 1) (left and right)
-            action = torch.tensor([random.randrange(2)]) 
+        #take random action (random # betwee 0 and 1) (left and right)  
+            rando = random.randint(0, 1)
+            action = torch.tensor([rando]) 
+        
         else: 
         #take the best action  
             with torch.no_grad(): 
@@ -97,7 +97,7 @@ class DQNAgent():
                 actions = self.policy_net(state) 
                 # print("actions.size(): ") 
                 # print(actions.size())
-                action = torch.argmax(actions).view(1, 1) 
+                action = self.policy_net(state).max(1)[1].view(1, 1)
                 
         return action.item() 
 
@@ -124,7 +124,6 @@ def compute_loss(memory, model, optimizer):
 
         expected_state_action_vals.append(target) 
         q_values = dqn.policy_net(torch.FloatTensor(state))
-        # print(q_values.size(), action)
         q_values = q_values.view(2, 1)
         state_action_val = q_values[action]
         state_action_vals.append(state_action_val)
@@ -135,53 +134,63 @@ def compute_loss(memory, model, optimizer):
     state_action_vals.requires_grad = True  
             
     # compute Huber loss
-    loss = F.smooth_l1_loss(state_action_vals, state_action_vals)
-    
+    loss = F.smooth_l1_loss(state_action_vals, state_action_vals) 
     ## gradient update
     optimizer.zero_grad()
     loss.backward()
-    # for param in model.parameters():
-    #     param.grad.data.clamp_(-1, 1)
-
     optimizer.step()
 
     return loss 
-    
 
-def train(dqn, epochs, optimizer, target_update, gamma, env, memory, render):
-    running_reward = 0 
-    episodes = 100 
+def preprocess_state(state):
+    state = torch.Tensor(state).view(1, 4)
+    return state
+
+def train(dqn, episodes, optimizer, target_update, gamma, env, memory, render):
+    running_reward = 0  
     rewards_list = [] 
     loss_list = []
+    
+    log_interval = 10
     for ep in range(episodes):  
         state = env.reset()
         score = 0 
         done = False  
-        counter = 0 
+        counter = 0
+        score_list = [] 
         while not done: 
-            action = dqn.select_action(torch.Tensor(env.state)) 
+            state = preprocess_state(state)
+            action = dqn.select_action(state) 
+            # print("Action", action)
             next_state, reward, done, _ = env.step(action) 
             memory.storage.append((state, action, next_state, reward, done))
             score += reward 
             rewards_list.append(reward)
+            state = next_state 
             if (render):
                 env.render()
+            
             counter += 1
-        
+            score_list.append(reward)
+
+            # print("Counter {}".format(counter)) 
         #compute running_reward here
+        running_reward = running_reward * (1 - 1/log_interval) + reward * (1/log_interval) 
         loss = compute_loss(memory, dqn.policy_net, optimizer)
         loss_list.append(loss)
+        
 
         if (ep % target_update == 0): 
             dqn.target_net.load_state_dict(dqn.policy_net.state_dict()) 
 
         # do some printing here
-        print("Episode: {}, Score: {}, Avg. Reward: {}".format(ep, score, score/counter))
+        print("Episode: [{}/{}], Score: {}".format(ep, episodes, score)) 
         
     return rewards_list
     
 #testing purposes 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
+#print(torch.cuda.get_device_name(0))
  
 env_name = "CartPole-v0"
 env = gym.make(env_name)
@@ -191,9 +200,9 @@ state_dim = env.observation_space.shape[0]
 
 dqn = DQNAgent(state_dim,  action_dim) 
 
-render = True 
-gamma = .9  
+render = False 
+gamma = .99 
 replay = Replay_Buffer(1000)
-epochs = 5
-optimizer = optim.Adam(dqn.policy_net.parameters())
-train(dqn, epochs, optimizer, 10, gamma, env, replay, render) 
+episodes = 500 
+optimizer = optim.RMSprop(dqn.policy_net.parameters())
+train(dqn, episodes, optimizer, 10, gamma, env, replay, render) 
