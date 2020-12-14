@@ -206,5 +206,7 @@ render = False
 gamma = .99
 replay = Replay_Buffer(1000)
 episodes = 1000 
-optimizer = optim.RMSprop(dqn.policy_net.parameters())
+# optimizer = optim.RMSprop(dqn.policy_net.parameters())
+optimizer = torch.optim.Adam(dqn.policy_net.parameters(), lr=1e-4)
+
 train(dqn, episodes, optimizer, 10, gamma, env, replay, render) 
