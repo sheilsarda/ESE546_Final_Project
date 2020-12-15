@@ -12,6 +12,7 @@ import datetime
 import os
 import pandas as pd 
 from copy import deepcopy
+import matplotlib.pyplot as plt 
  
 def save_model(model):
     out_dir = 'saved'
@@ -113,17 +114,16 @@ def optimize_loss(dqn, optimizer, gamma, memory_replay):
     optimizer.step()
 
 def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, render, save, k_iters, meta):
-    
+
+    scores_over_time = []     
+    done = 0 
     for ep in range(episodes): 
         state = env.reset()
-        score = 0
-        done = False
-        count = 0
-        while not done:  
+        score = 0     
+        count = 0 
+        while (done < 3):  
             if render: env.render()
-
-            # save state
-
+            # save state 
             tensor_state = torch.FloatTensor(state).unsqueeze(0)
             action = dqn.policy_net.select_action(tensor_state)
             next_state, reward, done, _ = env.step(action)
@@ -136,13 +136,19 @@ def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, rend
             state = next_state
             count += 1
             if meta and count > k_iters:
-                break         
+                break       
+        
+        if (score >= 200): 
+            done += 1 
             
         #printing 
         if ep % 10 == 0: 
             if save: 
                 save_model(dqn.policy_net)
             print('Episode {} | Total Episode score: {:.2f}\t'.format(ep, score)) 
+            scores_over_time.append(score)
+        
+    return scores_over_time 
 
 class DQN_Agent():
     def __init__(self, state_dim, h_dim1, h_dim2, action_dim):
@@ -163,10 +169,21 @@ def create_envs_g():
     env_4 = gym.make("CartPole-v5")
     envs.append(env_4)
     
-    # Hold out CartPole-v6
-    
+    # Hold out CartPole-v6 for validation 
     return envs
-    
+
+def lets_plot_baby(meta_rewards):
+    for i in range(len(meta_rewards)): 
+        
+        fig = plt.figure(figsize=(10,5))
+        
+        plt.title(title)
+   
+        fig.add_subplot(int(size/5), 5, i+1)
+        plt.plot(meta_rewards[i])
+        plt.ylabel("Reward")
+        plt.xlabel("Ep")
+        plt.show()
 
 if __name__ == "__main__": 
  
@@ -187,17 +204,15 @@ if __name__ == "__main__":
     dqn_agent = DQN_Agent(state_dim, h_dim1, h_dim2, action_dim)    
 
     # ______ REPTILE ______ # 
-    #make environments
-    envs_g = create_envs_g()   
 
-    # all_params = torch.FloatTensor(np.random.normal(0.0, 1.0, int(1e6)))
-    
+    #make environments
+    envs_g = create_envs_g()  
     meta_step_size_final = .1
     meta_step_size = .1 
     k_iters = 200
     meta_iters = 5 
     goin_meta = True
-    sequential = True
+    sequential = False 
 
     o_weights = None
     all_params = None
@@ -240,7 +255,11 @@ if __name__ == "__main__":
                 
             all_params = updated_params
 
-    print("---------Doing Validation--------")
+
+    meta_rewards = 
+    lets_plot_baby(meta_rewards)
+
+    print(" ======== Doing Validation ==========")
     val_env= gym.make("CartPole-v6")
     print(val_env)
     render = True
