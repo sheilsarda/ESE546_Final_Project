@@ -148,14 +148,14 @@ def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, rend
             if score >= 200: 
                 done_idx += 1 
                 break 
-            
+        
+        scores_over_time.append(score)
         #printing 
         if ep % 10 == 0: 
             if save: 
                 save_model(dqn.policy_net)
             print('Episode {} | Total Episode score: {:.2f}\t'.format(ep, score)) 
-            scores_over_time.append(score)
-        
+         
     return scores_over_time 
 
 class DQN_Agent():
@@ -185,7 +185,7 @@ def lets_plot_baby(meta_rewards):
     # Plot each figure individually
     for i, (task_name, rewards_list) in enumerate(meta_rewards.items()):    
         plt.figure(figsize=(10,5))
-        plt.plot(rewards_list)
+        plt.plot(np.arange(1, len(rewards_list)+1), rewards_list)
         plt.title("Task " + str(task_name) + ", Run Number " + str(i))
         plt.grid()
         plt.ylabel("Reward")
@@ -200,7 +200,7 @@ def lets_plot_baby(meta_rewards):
     # all plot
     for i, (task_name, rewards_list) in enumerate(meta_rewards.items()):
         strLabel = "Task " + str(task_name)
-        plt.plot(rewards_list, label=strLabel)
+        plt.plot(np.arange(1, len(rewards_list)+1),rewards_list, label=strLabel)
     
     plt.title("All tasks")
     plt.grid() 
@@ -213,8 +213,7 @@ def lets_plot_baby(meta_rewards):
         os.makedirs(out_dir, exist_ok=True)
 
     plt.savefig(out_dir + "Task_" + "all.png")
-    plt.show()
-
+    
 if __name__ == "__main__": 
  
     #hyperparameters
@@ -274,7 +273,6 @@ if __name__ == "__main__":
             
         task_reward_list = train(task, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, k_iters, goin_meta) 
         meta_rewards[str(random_task_ix) + ""] = task_reward_list
-        print(str(task), list(task_reward_list))
         state = optimizer.state_dict()  
         task_ix+=1
         
@@ -295,7 +293,7 @@ if __name__ == "__main__":
     print(" ======== Doing Validation ==========")
     val_env= gym.make("CartPole-v6")
     print(val_env)
-    render = False a
+    render = False 
     train(val_env, dqn_agent, 1, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, 1, True) # one-shot learning
 
     
