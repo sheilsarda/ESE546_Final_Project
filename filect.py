@@ -116,12 +116,10 @@ def optimize_loss(dqn, optimizer, gamma, memory_replay):
 def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, render, save, k_iters, meta):
 
     scores_over_time = []     
-    done_idx = 0 
     
     for ep in range(episodes): 
 
-        if (done_idx > 5): 
-            break 
+        done_idx = 0 # early stopping
         
         state = env.reset()
         score = 0     
@@ -147,6 +145,8 @@ def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, rend
         
             if score >= 200: 
                 done_idx += 1 
+
+            if (done_idx > 20): # stop if we've hit 200 more than 20 times
                 break 
         
         scores_over_time.append(score)
@@ -231,7 +231,7 @@ if __name__ == "__main__":
     GAMMA = 0.99 
     BATCH_SIZE = 16
     memory_replay = Replay_Buffer(10000) 
-    episodes = 10 # Tunable
+    episodes = 1000 # Tunable
     target_updates = 10
     render = False 
     save = True  
