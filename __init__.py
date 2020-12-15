@@ -65,7 +65,7 @@ register(
 )
 
 register(
-    id='CartPole-v2g',
+    id='CartPole-v2',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
     reward_threshold=195.0,
@@ -73,7 +73,7 @@ register(
 )
 
 register(
-    id='CartPole-v3g',
+    id='CartPole-v3',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
     reward_threshold=195.0,
@@ -81,7 +81,7 @@ register(
 )
 
 register(
-    id='CartPole-v4g',
+    id='CartPole-v4',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
     reward_threshold=195.0,
@@ -89,7 +89,7 @@ register(
 )
 
 register(
-    id='CartPole-v5g',
+    id='CartPole-v5',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
     reward_threshold=195.0,
@@ -97,7 +97,7 @@ register(
 )
 
 register(
-    id='CartPole-v6g',
+    id='CartPole-v6',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
     reward_threshold=195.0,
@@ -105,7 +105,7 @@ register(
 )
 
 register(
-    id='CartPole-v1-mp',
+    id='CartPole-v7',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
     reward_threshold=195.0,
@@ -113,7 +113,7 @@ register(
 )
 
 register(
-    id='CartPole-v2-mp',
+    id='CartPole-v8',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
     reward_threshold=195.0,
@@ -121,7 +121,7 @@ register(
 )
 
 register(
-    id='CartPole-v3-mp',
+    id='CartPole-v9',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
     reward_threshold=195.0,
@@ -129,7 +129,7 @@ register(
 )
 
 register(
-    id='CartPole-v4-mp',
+    id='CartPole-v10',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
     reward_threshold=195.0,

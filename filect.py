@@ -10,8 +10,7 @@ from collections import namedtuple
 import math
 import datetime
 import os 
-
-
+ 
 def save_model(model):
     out_dir = 'saved'
     if not os.path.exists(out_dir):
@@ -111,7 +110,7 @@ def optimize_loss(dqn, optimizer, gamma, memory_replay):
     loss.backward()
     optimizer.step()
 
-def train(dqn, episodes, optimizer, target_updates, batch_size, gamma, render, save):
+def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, render, save):
     
     for ep in range(episodes): 
         state = env.reset()
@@ -142,36 +141,57 @@ class DQN_Agent():
         self.target_net = DQN_Network(state_dim, h_dim1, h_dim2, action_dim)
         self.target_net.load_state_dict(self.policy_net.state_dict())
 
+def create_envs_g(): 
+    envs = []
+    env_orig = gym.make("CartPole-v0") 
+    envs.append(env_orig)
+    env_1 = gym.make("CartPole-v2")   
+    envs.append(env_1)
+    env_2 = gym.make("CartPole-v3")
+    envs.append(env_2)
+    env_3 = gym.make("CartPole-v4")
+    envs.append(env_3)
+    env_4 = gym.make("CartPole-v5")
+    envs.append(env_4)
+    env_5= gym.make("CartPole-v6")
+    envs.append(env_5) 
+    
+    return envs
+    
+
 if __name__ == "__main__": 
-    env = gym.make('LunarLander-v2')
-    print(env.action_spacqe.n) 
-    env = gym.make('CartPole-v0')
-    n_state = env.observation_space.shape[0]
-    n_action = env.action_space.n
-
-    state_dim = 4
-    action_dim = 2 
-    h_dim1 = 64
-    h_dim2 = 256 
-    dqn_agent = DQN_Agent(state_dim, h_dim1, h_dim2, action_dim)    
-    optimizer = torch.optim.Adam(dqn_agent.policy_net.parameters(), lr=1e-4)
-
+ 
+    #hyperparameters
     GAMMA = 0.99 
     BATCH_SIZE = 16
     memory_replay = Replay_Buffer(10000) 
-    episode_reward = 0
-    episodes = 20 
+    episodes = 1000   
     target_updates = 10
-    render = False   
-    save = False 
-    train(dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save)
-    PATH = "saved/checkpointDQN_Model2020-12-14 200727.pt" 
+    render = True 
+    save = True  
+
+    #SETUP NETWORK
+    state_dim = 4
+    action_dim = 2 
+    h_dim1 = 64
+    h_dim2 = 256
+    dqn_agent = DQN_Agent(state_dim, h_dim1, h_dim2, action_dim)    
+    optimizer = torch.optim.Adam(dqn_agent.policy_net.parameters(), lr=1e-4)
+    
+    #make environments
+    envs_g = create_envs_g()  
+    for env in envs_g:
+        train(env, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save)
+    
+    #load models back 
+    PATH = "saved/" + str() + "checkpointDQN_Model2020-12-14 200727.pt" 
     PATH_2 = "saved/checkpointDQN_Model2020-12-14 200726.pt"
     
+    """
     for name, param in dqn_agent.policy_net.named_parameters():
         print(name)
         print(param)
-
+    """
     
     checkpoint = load_model(PATH)
     checkpoint_2 = load_model(PATH_2)
@@ -181,10 +201,14 @@ if __name__ == "__main__":
         return res
     
     check_merged = Merge(checkpoint, checkpoint_2)
-    print(check_merged)
+    #print(check_merged)
     """
     l1_w = checkpoint['net']['l1.weight']
     l2_w = checkpoint['net']['l2.weight']
     l3_w = checkpoint['net']['l3.weight'] 
     l3_b = checkpoint['net']['l3.weight']
     """
+
+
+
+
