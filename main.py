@@ -116,10 +116,9 @@ def optimize_loss(dqn, optimizer, gamma, memory_replay):
 def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, render, save, k_iters, meta):
 
     scores_over_time = []     
+    done_idx = 0 # early stopping
     
     for ep in range(episodes): 
-
-        done_idx = 0 # early stopping
         
         state = env.reset()
         score = 0     
@@ -146,8 +145,9 @@ def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, rend
             if score >= 200: 
                 done_idx += 1 
 
-            if (done_idx > 20): # stop if we've hit 200 more than 20 times
-                break 
+        if (done_idx > 10): # stop if we've hit 200 more than 10 times
+            print("**Early stop reached**")
+            break 
         
         scores_over_time.append(score)
         #printing 
@@ -191,13 +191,13 @@ def create_envs():
 
     return envs
 
-def lets_plot_baby(meta_rewards): 
+def lets_plot_baby(tasks_list, meta_rewards): 
 
     # Plot each figure individually
-    for i, (task_name, rewards_list) in enumerate(meta_rewards.items()):    
+    for i in range(len(tasks_list)):    
         plt.figure(figsize=(10,5))
-        plt.plot(np.arange(1, len(rewards_list)+1), rewards_list)
-        plt.title("Task " + str(task_name) + ", Run Number " + str(i))
+        plt.plot(np.arange(1, len(meta_rewards[i])+1), meta_rewards[i])
+        plt.title("Run Number " + str(i) + ", Task " + str(tasks_list[i]))
         plt.grid()
         plt.ylabel("Reward")
         plt.xlabel("Episode")
@@ -206,17 +206,20 @@ def lets_plot_baby(meta_rewards):
         if not os.path.exists(out_dir):
             os.makedirs(out_dir, exist_ok=True)
  
-        plt.savefig(out_dir + "Task_" + str(task_name) + "_run_" + str(i) + ".png")
+        plt.savefig(out_dir + "Task_" + str(tasks_list[i]) + "_run_" + str(i) + ".png")
 
-    # all plot
-    for i, (task_name, rewards_list) in enumerate(meta_rewards.items()):
-        strLabel = "Task " + str(task_name)
-        plt.plot(np.arange(1, len(rewards_list)+1),rewards_list, label=strLabel)
     
-    plt.title("All tasks")
+    # all plot
+    plt.figure(figsize=(20,10))
+    for i in range(len(tasks_list)):
+        strLabel = "Run Number " + str(i) + ", Task " + str(tasks_list[i])
+        plt.plot(np.arange(1, len(meta_rewards[i])+1), meta_rewards[i], label=strLabel)
+
     plt.grid() 
+    plt.title("All tasks")
     plt.ylabel("Reward")
     plt.xlabel("Episode")
+    plt.legend()
 
     #save figure 
     out_dir = "images/"
@@ -231,7 +234,7 @@ if __name__ == "__main__":
     GAMMA = 0.99 
     BATCH_SIZE = 16
     memory_replay = Replay_Buffer(10000) 
-    episodes = 1000 # Tunable
+    episodes = 20 # Tunable
     target_updates = 10
     render = False 
     save = True  
@@ -257,7 +260,8 @@ if __name__ == "__main__":
     o_weights = None
     all_params = None
     task_ix = 0
-    meta_rewards = {} 
+    meta_rewards = []
+    tasks_list = [] 
     for i in range(meta_iters): 
         # Update learning rate
         frac_done = i / meta_iters
@@ -283,7 +287,8 @@ if __name__ == "__main__":
             print("========> Running task " + str(random_task_ix))
             
         task_reward_list = train(task, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, k_iters, goin_meta) 
-        meta_rewards[str(random_task_ix) + ""] = task_reward_list
+        tasks_list.append(str(random_task_ix))
+        meta_rewards.append(task_reward_list)
         state = optimizer.state_dict()  
         task_ix+=1
         
@@ -299,7 +304,7 @@ if __name__ == "__main__":
 
 
     print(" ======== Train Plotting ==========")
-    lets_plot_baby(meta_rewards)
+    lets_plot_baby(tasks_list, meta_rewards)
 
     print(" ======== Doing Validation ==========")
     val_env1 = gym.make("CartPole-v6")
