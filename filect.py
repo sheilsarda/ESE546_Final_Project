@@ -174,7 +174,7 @@ if __name__ == "__main__":
     GAMMA = 0.99 
     BATCH_SIZE = 16
     memory_replay = Replay_Buffer(10000) 
-    episodes = 50   
+    episodes = 500  
     target_updates = 10
     render = False 
     save = True  
@@ -207,11 +207,7 @@ if __name__ == "__main__":
         #convex combination of meta_step_size (start, final) --> curr
         cur_meta_step_size = frac_done * meta_step_size_final + (1 - frac_done) * meta_step_size
         
-        
-        # Clone model
-       
-        optimizer = torch.optim.Adam(dqn_agent.policy_net.parameters(), lr=1e-4)    
-     
+        optimizer = torch.optim.Adam(dqn_agent.policy_net.parameters(), lr=1e-4)
                 
         # Sample base task
         task_idx = random.choices(envs_g, k=1)   
@@ -233,9 +229,12 @@ if __name__ == "__main__":
                 
             all_params = updated_params
 
+    print("---------Doing Validation--------")
     val_env= gym.make("CartPole-v6")
-    train(val_env, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, 1, True)
-
+    print(val_env)
+    render = True
+    train(val_env, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, 1, True) # one-shot learning
+    
     
     """
     #load models back 
