@@ -11,6 +11,7 @@ import math
 import datetime
 import os
 import pandas as pd 
+from copy import deepcopy
  
 def save_model(model):
     out_dir = 'saved'
@@ -173,7 +174,7 @@ if __name__ == "__main__":
     GAMMA = 0.99 
     BATCH_SIZE = 16
     memory_replay = Replay_Buffer(10000) 
-    episodes = 1000   
+    episodes = 50   
     target_updates = 10
     render = False 
     save = True  
@@ -184,28 +185,54 @@ if __name__ == "__main__":
     h_dim1 = 64
     h_dim2 = 256
     dqn_agent = DQN_Agent(state_dim, h_dim1, h_dim2, action_dim)    
-    optimizer = torch.optim.Adam(dqn_agent.policy_net.parameters(), lr=1e-4)
 
     # ______ REPTILE ______ # 
     #make environments
     envs_g = create_envs_g()   
 
-    all_params = np.random.normal(0.0, 1.0, int(1e6))
-    all_params = torch.FloatTensor(all_params)    
+    # all_params = torch.FloatTensor(np.random.normal(0.0, 1.0, int(1e6)))
+    
     meta_step_size_final = .1
     meta_step_size = .1 
     k_iters = 10
     meta_iters = 5 
     goin_meta = True
+
+    o_weights = None
+    all_params = None
+
     for i in range(meta_iters): 
-        task = random.choices(envs_g, k=1)
-        train(task, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, k_iters, goin_meta)
-        
+        # Update learning rate
         frac_done = i / meta_iters
         #convex combination of meta_step_size (start, final) --> curr
         cur_meta_step_size = frac_done * meta_step_size_final + (1 - frac_done) * meta_step_size
-        single_task_params = dqn_agent.policy_net.parameters() # na
-        all_params = all_params + cur_meta_step_size*(single_task_params.data - all_params.data)
+        
+        
+        # Clone model
+       
+        optimizer = torch.optim.Adam(dqn_agent.policy_net.parameters(), lr=1e-4)    
+        if o_weights is not None:
+            optimizer.state_dict(o_weights)
+                
+        # Sample base task
+        task_idx = random.choices(envs_g, k=1)   
+        print(task_idx)
+        o_weights = optimizer.state_dict() 
+        single_task_params = dqn_agent.policy_net.parameters()
+        
+        # Update network
+        train(task_idx[0], dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, k_iters, goin_meta)
+        state = optimizer.state_dict()  
+        
+        if all_params == None:
+            all_params = single_task_params # initialization
+        else:
+            updated_params = deepcopy(all_params)
+            for i, s, a in enumerate(zip(single_task_params, all_params)):
+                dif = s.data - a.data 
+                updated_params[i] = a.data + cur_meta_step_size*(dif)
+                
+            all_params = updated_params
 
     val_env= gym.make("CartPole-v6")
     train(val_env, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, 1, True)
