@@ -73,69 +73,68 @@ register(
 )
 
 register(
-    id='CartPole-v3-g'
+    id='CartPole-v3-g',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
-    reward_threshold=-110.0,
+    reward_threshold=195.0,
     kwargs = {"gravity":30.0, "masspole":0.1}, 
 )
 
 register(
-    id='CartPole-v4-g'
+    id='CartPole-v4-g',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
-    reward_threshold=195.00, 
-    kwargs = {"gravity":40.0, "masspole":0.1},  
+    reward_threshold=195.0,
+    kwargs = {"gravity":40.0, "masspole":0.1}, 
 )
 
 register(
-    id='CartPole-v5-g'
+    id='CartPole-v5-g',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
-    reward_threshold=195.0, 
-    kwargs = {"gravity":50.0, "masspole":0.1},  
+    reward_threshold=195.0,
+    kwargs = {"gravity":50.0, "masspole":0.1}, 
 )
 
 register(
-    id='CartPole-v6-g'
+    id='CartPole-v6-g',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
-    reward_threshold=195.0, 
-    kwargs = {"gravity":60.0, "masspole":0.1},  
+    reward_threshold=195.0,
+    kwargs = {"gravity":60.0, "masspole":0.1}, 
 )
 
 register(
-    id='CartPole-v1-massp'
+    id='CartPole-v1-mp',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
-    reward_threshold=195.0, 
-    kwargs = {"gravity":10.0, "masspole":0.2},  
+    reward_threshold=195.0,
+    kwargs = {"gravity":10.0, "masspole":0.2}, 
 )
 
 register(
-    id='CartPole-v2-massp'
+    id='CartPole-v2-mp',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
-    reward_threshold=195.0, 
-    kwargs = {"gravity":10.0, "masspole":0.4},  
+    reward_threshold=195.0,
+    kwargs = {"gravity":10.0, "masspole":0.4}, 
 )
 
 register(
-    id='CartPole-v3-massp'
+    id='CartPole-v3-mp',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
-    reward_threshold=195.0, 
-    kwargs = {"gravity":10.0, "masspole":0.8},  
+    reward_threshold=195.0,
+    kwargs = {"gravity":10.0, "masspole":0.8}, 
 )
 
 register(
-    id='CartPole-v4-massp'
+    id='CartPole-v4-mp',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
-    reward_threshold=195.0, 
-    kwargs = {"gravity":10.0, "masspole":1.0},  
+    reward_threshold=195.0,
+    kwargs = {"gravity":10.0, "masspole":1.0}, 
 )
-
 
 register(
     id='MountainCar-v0',
