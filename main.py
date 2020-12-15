@@ -234,7 +234,7 @@ if __name__ == "__main__":
     GAMMA = 0.99 
     BATCH_SIZE = 16
     memory_replay = Replay_Buffer(10000) 
-    episodes = 5000 # Tunable
+    episodes = 500 # Tunable
     target_updates = 10
     render = False 
     save = True  
