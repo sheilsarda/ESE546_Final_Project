@@ -51,10 +51,6 @@ class DQN_Network(nn.Module):
 
     def forward(self, x):
         x = x.squeeze(0) 
-        print("x shape", x)
-
-        x = x.view(4) 
-        print("x shape", x)
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
         x = F.relu(self.l3(x))
@@ -166,7 +162,6 @@ def train(dqn, episodes, optimizer, target_update, gamma, env, memory, render):
             
             state = preprocess_state(state)
             action = dqn.select_action(state) 
-            # print("Action", action)
             next_state, reward, done, _ = env.step(action) 
             memory.storage.append((state, action, next_state, reward, done))
             score += reward 
@@ -175,7 +170,6 @@ def train(dqn, episodes, optimizer, target_update, gamma, env, memory, render):
             
             counter += 1
         
-            # print("Counter {}".format(counter)) 
         #compute running_reward here
         running_reward = running_reward * (1 - 1/log_interval) + reward * (1/log_interval) 
         loss = compute_loss(memory, dqn.policy_net, dqn, optimizer)
