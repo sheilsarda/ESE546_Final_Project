@@ -116,12 +116,18 @@ def optimize_loss(dqn, optimizer, gamma, memory_replay):
 def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, render, save, k_iters, meta):
 
     scores_over_time = []     
-    done = 0 
+    done_idx = 0 
+    
     for ep in range(episodes): 
+
+        if (done_idx > 5): 
+            break 
+        
         state = env.reset()
         score = 0     
-        count = 0 
-        while (done < 3):  
+        count = 0  
+        done = False
+        while not done:  
             if render: env.render()
             # save state 
             tensor_state = torch.FloatTensor(state).unsqueeze(0)
@@ -135,11 +141,13 @@ def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, rend
             optimize_loss(dqn, optimizer, gamma, memory_replay) # if meta is true, then only do k-iters of ADAM
             state = next_state
             count += 1
+            
             if meta and count > k_iters:
                 break       
         
-        if (score >= 200): 
-            done += 1 
+            if score >= 200: 
+                done_idx += 1 
+                break 
             
         #printing 
         if ep % 10 == 0: 
@@ -172,18 +180,20 @@ def create_envs_g():
     # Hold out CartPole-v6 for validation 
     return envs
 
-def lets_plot_baby(meta_rewards):
-    for i in range(len(meta_rewards)): 
-        
-        fig = plt.figure(figsize=(10,5))
-        
-        plt.title(title)
-   
-        fig.add_subplot(int(size/5), 5, i+1)
-        plt.plot(meta_rewards[i])
+def lets_plot_baby(meta_rewards): 
+    for i, (task_name, rewards_list) in enumerate(meta_rewards.items()):
+        print(task_name)    
+        plt.figure(figsize=(10,5))
+        plt.plot(rewards_list)
+        plt.title(task_name + " run " + str(i))
         plt.ylabel("Reward")
-        plt.xlabel("Ep")
-        plt.show()
+        plt.xlabel("Episode")
+        
+        out_dir = "images/"
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir, exist_ok=True)
+ 
+        plt.savefig(out_dir + str(task_name) + "_run_" + str(i) + ".png")
 
 if __name__ == "__main__": 
  
@@ -191,7 +201,7 @@ if __name__ == "__main__":
     GAMMA = 0.99 
     BATCH_SIZE = 16
     memory_replay = Replay_Buffer(10000) 
-    episodes = 500  
+    episodes = 10 # Tunable
     target_updates = 10
     render = False 
     save = True  
@@ -209,7 +219,7 @@ if __name__ == "__main__":
     envs_g = create_envs_g()  
     meta_step_size_final = .1
     meta_step_size = .1 
-    k_iters = 200
+    k_iters = 200 # Tunable
     meta_iters = 5 
     goin_meta = True
     sequential = False 
@@ -217,7 +227,7 @@ if __name__ == "__main__":
     o_weights = None
     all_params = None
     task_ix = 0
-
+    meta_rewards = {} 
     for i in range(meta_iters): 
         # Update learning rate
         frac_done = i / meta_iters
@@ -227,21 +237,24 @@ if __name__ == "__main__":
         optimizer = torch.optim.Adam(dqn_agent.policy_net.parameters(), lr=1e-4)
                 
         # Sample base task
-        task_idx = random.choices(envs_g, k=1)   
+        random_task_ix = random.randint(0, len(envs_g) - 1)
+        random_task = envs_g[random_task_ix]
         o_weights = optimizer.state_dict() 
         single_task_params = dqn_agent.policy_net.parameters()
         
         # Update network
         if sequential:
             task = envs_g[task_ix]
-        else: task = task_idx[0]
+        else: task = random_task
 
         if sequential:
             print("========> Running task " + str(task_ix))
         else:
-            print("========> Running task " + task_idx)
+            print("========> Running task " + str(random_task_ix))
             
-        train(task, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, k_iters, goin_meta)
+        task_reward_list = train(task, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, k_iters, goin_meta) 
+        meta_rewards[str(random_task_ix) + ""] = task_reward_list
+        print(str(task), list(task_reward_list))
         state = optimizer.state_dict()  
         task_ix+=1
         
@@ -256,7 +269,7 @@ if __name__ == "__main__":
             all_params = updated_params
 
 
-    meta_rewards = 
+    print(" ======== Train Plotting ==========")
     lets_plot_baby(meta_rewards)
 
     print(" ======== Doing Validation ==========")
