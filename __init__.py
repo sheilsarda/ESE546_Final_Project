@@ -109,7 +109,7 @@ register(
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
     reward_threshold=195.0, 
-    kwargs = {"gravity:10.0, "masspole":0.2},  
+    kwargs = {"gravity":10.0, "masspole":0.2},  
 )
 
 register(
@@ -133,7 +133,7 @@ register(
     entry_point='gym.envs.classic_control:CartPoleEnv',
     max_episode_steps=200,
     reward_threshold=195.0, 
-    kwargs = {"gravity:10.0, "masspole":1.0},  
+    kwargs = {"gravity":10.0, "masspole":1.0},  
 )
 
 
