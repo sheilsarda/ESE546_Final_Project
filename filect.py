@@ -110,12 +110,13 @@ def optimize_loss(dqn, optimizer, gamma, memory_replay):
     loss.backward()
     optimizer.step()
 
-def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, render, save):
+def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, render, save, k_iters, meta):
     
     for ep in range(episodes): 
         state = env.reset()
         score = 0
         done = False
+        count = 0
         while not done:  
             if render: env.render()
             tensor_state = torch.FloatTensor(state).unsqueeze(0)
@@ -126,9 +127,12 @@ def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, rend
             if (ep % target_updates == 0): 
                 dqn.target_net.load_state_dict(dqn.policy_net.state_dict())
    
-            optimize_loss(dqn, optimizer, gamma, memory_replay)
+            optimize_loss(dqn, optimizer, gamma, memory_replay) # if meta is true, then only do k-iters of ADAM
             state = next_state
-        
+            count += 1
+            if meta and count > k_iters:
+                break         
+            
         #printing 
         if ep % 10 == 0: 
             if save: 
@@ -177,11 +181,26 @@ if __name__ == "__main__":
     h_dim2 = 256
     dqn_agent = DQN_Agent(state_dim, h_dim1, h_dim2, action_dim)    
     optimizer = torch.optim.Adam(dqn_agent.policy_net.parameters(), lr=1e-4)
-    
+
+    # ______ REPTILE ______ # 
     #make environments
-    envs_g = create_envs_g()  
-    for env in envs_g:
-        train(env, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save)
+    envs_g = create_envs_g()   
+
+    all_params =d= np.random.normal(0.0, 1.0, 1000)
+    all_params = torch.FloatTensor(all_params)    
+
+    k_iters = 10
+    meta_iters = 5 
+    goin_meta = True
+    for i in range(meta_iters): 
+        task = random.choices(envs_g, k=1)
+        train(task, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, k_iters, goin_meta)
+
+        single_task_params = dqn_agent.policy_net.named_parameters() 
+
+    epsilon = 1/learning_rate
+    all_params = all_params + epsilon*(single_task_params - all_params)
+
     
     #load models back 
     PATH = "saved/" + str() + "checkpointDQN_Model2020-12-14 200727.pt" 
