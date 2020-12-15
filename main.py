@@ -145,7 +145,7 @@ def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, rend
             if score >= 200: 
                 done_idx += 1 
 
-        if (done_idx > 10): # stop if we've hit 200 more than 10 times
+        if (done_idx > episodes/5): # stop if we've hit 200 over 20% of the times
             print("**Early stop reached**")
             break 
         
@@ -216,7 +216,7 @@ def lets_plot_baby(tasks_list, meta_rewards):
         plt.plot(np.arange(1, len(meta_rewards[i])+1), meta_rewards[i], label=strLabel)
 
     plt.grid() 
-    plt.title("All tasks")
+    plt.title("All Tasks")
     plt.ylabel("Reward")
     plt.xlabel("Episode")
     plt.legend()
@@ -234,7 +234,7 @@ if __name__ == "__main__":
     GAMMA = 0.99 
     BATCH_SIZE = 16
     memory_replay = Replay_Buffer(10000) 
-    episodes = 20 # Tunable
+    episodes = 5000 # Tunable
     target_updates = 10
     render = False 
     save = True  
