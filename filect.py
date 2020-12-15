@@ -181,11 +181,13 @@ def create_envs_g():
     return envs
 
 def lets_plot_baby(meta_rewards): 
-    for i, (task_name, rewards_list) in enumerate(meta_rewards.items()):
-        print(task_name)    
+
+    # Plot each figure individually
+    for i, (task_name, rewards_list) in enumerate(meta_rewards.items()):    
         plt.figure(figsize=(10,5))
         plt.plot(rewards_list)
-        plt.title(task_name + " run " + str(i))
+        plt.title("Task " + str(task_name) + ", Run Number " + str(i))
+        plt.grid()
         plt.ylabel("Reward")
         plt.xlabel("Episode")
         
@@ -193,7 +195,25 @@ def lets_plot_baby(meta_rewards):
         if not os.path.exists(out_dir):
             os.makedirs(out_dir, exist_ok=True)
  
-        plt.savefig(out_dir + str(task_name) + "_run_" + str(i) + ".png")
+        plt.savefig(out_dir + "Task_" + str(task_name) + "_run_" + str(i) + ".png")
+
+    # all plot
+    for i, (task_name, rewards_list) in enumerate(meta_rewards.items()):
+        strLabel = "Task " + str(task_name)
+        plt.plot(rewards_list, label=strLabel)
+    
+    plt.title("All tasks")
+    plt.grid() 
+    plt.ylabel("Reward")
+    plt.xlabel("Episode")
+
+    #save figure 
+    out_dir = "images/"
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir, exist_ok=True)
+
+    plt.savefig(out_dir + "Task_" + "all.png")
+    plt.show()
 
 if __name__ == "__main__": 
  
@@ -275,9 +295,9 @@ if __name__ == "__main__":
     print(" ======== Doing Validation ==========")
     val_env= gym.make("CartPole-v6")
     print(val_env)
-    render = True
+    render = False a
     train(val_env, dqn_agent, 1, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, 1, True) # one-shot learning
-    
+
     
     """
     #load models back 
