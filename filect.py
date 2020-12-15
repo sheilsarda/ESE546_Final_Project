@@ -211,8 +211,7 @@ if __name__ == "__main__":
         # Clone model
        
         optimizer = torch.optim.Adam(dqn_agent.policy_net.parameters(), lr=1e-4)    
-        if o_weights is not None:
-            optimizer.state_dict(o_weights)
+     
                 
         # Sample base task
         task_idx = random.choices(envs_g, k=1)   
@@ -227,8 +226,8 @@ if __name__ == "__main__":
         if all_params == None:
             all_params = single_task_params # initialization
         else:
-            updated_params = deepcopy(all_params)
-            for i, s, a in enumerate(zip(single_task_params, all_params)):
+            updated_params = list(all_params)
+            for i, (s, a) in enumerate(zip(single_task_params, all_params)):
                 dif = s.data - a.data 
                 updated_params[i] = a.data + cur_meta_step_size*(dif)
                 
