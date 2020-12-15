@@ -61,7 +61,7 @@ class DQN_Network(nn.Module):
     def forward(self, x):
         # x = x.expand(x, dim=1) 
         x = x.view(1, 4) 
-        print("x shape", x.size())
+        # print("x shape", x.size())
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
         x = F.relu(self.l3(x))
@@ -160,8 +160,8 @@ def compute_loss(memory, model, agent, optimizer):
     state = list(batch.state)
     next_state = list(batch.next_state)
 
-    print("STATE: ", len(state))
-    print("NEXT_STATE: ", len(next_state))
+    # print("STATE: ", len(state))
+    # print("NEXT_STATE: ", len(next_state))
 
     # Compute a mask of non-final states and concatenate the batch elements
     # (a final state would've been the one after which simulation ended)  
@@ -169,7 +169,7 @@ def compute_loss(memory, model, agent, optimizer):
     non_final_next_states = torch.cat([torch.Tensor(s) for s in next_state
                                                 if s is not None])
     state_batch = torch.cat(state)
-    print("Action ", len(batch.action)) 
+    # print("Action ", len(batch.action)) 
     action_batch = []
     for s in batch.action:
         action_batch.append(s)
@@ -187,15 +187,14 @@ def compute_loss(memory, model, agent, optimizer):
     #print(action_batch.size()) 
     
     
-    """
-    state_action_values = []
-    for qv, ac in zip(model(state_batch), action_batch.long()):
-        state_action_values.append(qv[ac])
-    
-    print("State action values", len(state_action_values))
-    state_action_values = torch.cat(state_action_values, dim=0)
-    """
-    state_action_values = model(state_batch).gather(1, action_batch.long())
+    # print("State Batch  ", state_batch.view(BATCH_SIZE, 4) )
+    # print("Model        ", model(state_batch))
+    # print("Action Batch", action_batch)
+
+    ix = torch.LongTensor([[action_batch[0]]])
+    # print("IX", ix)
+
+    state_action_values = torch.gather(model(state_batch), 1, ix)
 
     # Compute V(s_{t+1}) for all next states.
     # Expected values of actions for non_final_next_states are computed based
