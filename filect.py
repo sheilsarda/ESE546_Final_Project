@@ -164,10 +164,12 @@ class DQN_Agent():
         self.target_net = DQN_Network(state_dim, h_dim1, h_dim2, action_dim)
         self.target_net.load_state_dict(self.policy_net.state_dict())
 
-def create_envs_g(): 
+def create_envs(): 
     envs = []
     env_orig = gym.make("CartPole-v0") 
     envs.append(env_orig)
+
+    # gravity
     env_1 = gym.make("CartPole-v2")   
     envs.append(env_1)
     env_2 = gym.make("CartPole-v3")
@@ -176,8 +178,17 @@ def create_envs_g():
     envs.append(env_3)
     env_4 = gym.make("CartPole-v5")
     envs.append(env_4)
+
+    # mass pole 
+    env_7 = gym.make("CartPole-v7")
+    envs.append(env_7)
+    env_8 = gym.make("CartPole-v8")
+    envs.append(env_8)
+    env_9 = gym.make("CartPole-v9")
+    envs.append(env_9)
     
-    # Hold out CartPole-v6 for validation 
+    # Hold out CartPole-v6 and v10 for validation 
+
     return envs
 
 def lets_plot_baby(meta_rewards): 
@@ -235,11 +246,11 @@ if __name__ == "__main__":
     # ______ REPTILE ______ # 
 
     #make environments
-    envs_g = create_envs_g()  
+    envs = create_envs()  
     meta_step_size_final = .1
     meta_step_size = .1 
     k_iters = 200 # Tunable
-    meta_iters = 5 
+    meta_iters = len(envs)
     goin_meta = True
     sequential = False 
 
@@ -256,14 +267,14 @@ if __name__ == "__main__":
         optimizer = torch.optim.Adam(dqn_agent.policy_net.parameters(), lr=1e-4)
                 
         # Sample base task
-        random_task_ix = random.randint(0, len(envs_g) - 1)
-        random_task = envs_g[random_task_ix]
+        random_task_ix = random.randint(0, len(envs) - 1)
+        random_task = envs[random_task_ix]
         o_weights = optimizer.state_dict() 
         single_task_params = dqn_agent.policy_net.parameters()
         
         # Update network
         if sequential:
-            task = envs_g[task_ix]
+            task = envs[task_ix]
         else: task = random_task
 
         if sequential:
@@ -291,11 +302,15 @@ if __name__ == "__main__":
     lets_plot_baby(meta_rewards)
 
     print(" ======== Doing Validation ==========")
-    val_env= gym.make("CartPole-v6")
-    print(val_env)
-    render = False 
-    train(val_env, dqn_agent, 1, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, 1, True) # one-shot learning
+    val_env1 = gym.make("CartPole-v6")
+    print(val_env1)
+    render = True 
+    train(val_env1, dqn_agent, 5, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, 1, True) # one-shot learning
 
+    val_env2= gym.make("CartPole-v10")
+    print(val_env2)
+    render = True   
+    train(val_env2, dqn_agent, 5, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, 1, True) # one-shot learning
     
     """
     #load models back 
