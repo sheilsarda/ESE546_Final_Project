@@ -317,28 +317,8 @@ if __name__ == "__main__":
     render = True   
     train(val_env2, dqn_agent, 5, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, 1, True) # one-shot learning
     
+    
     """
-    #load models back 
-    PATH = "saved/" + str() + "checkpointDQN_Model2020-12-14 200727.pt" 
-    PATH_2 = "saved/checkpointDQN_Model2020-12-14 200726.pt"
-    
-    for name, param in dqn_agent.policy_net.named_parameters():
-        print(name)
-        print(param)
-    
-    
+    # Loading saved models:
     checkpoint = load_model(PATH)
-    checkpoint_2 = load_model(PATH_2)
-    
-    def Merge(dict1, dict2):
-        res = {**dict1, **dict2}
-        return res
-    
-    check_merged = Merge(checkpoint, checkpoint_2)
-    #print(check_merged)
-    
-    l1_w = checkpoint['net']['l1.weight']
-    l2_w = checkpoint['net']['l2.weight']
-    l3_w = checkpoint['net']['l3.weight'] 
-    l3_b = checkpoint['net']['l3.weight']
     """
