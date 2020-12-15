@@ -194,12 +194,14 @@ if __name__ == "__main__":
     
     meta_step_size_final = .1
     meta_step_size = .1 
-    k_iters = 10
+    k_iters = 200
     meta_iters = 5 
     goin_meta = True
+    sequential = True
 
     o_weights = None
     all_params = None
+    task_ix = 0
 
     for i in range(meta_iters): 
         # Update learning rate
@@ -210,14 +212,20 @@ if __name__ == "__main__":
         optimizer = torch.optim.Adam(dqn_agent.policy_net.parameters(), lr=1e-4)
                 
         # Sample base task
-        task_idx = random.choices(envs_g, k=1)   
-        print(task_idx)
+        # task_idx = random.choices(envs_g, k=1)   
+        # print(task_idx)
         o_weights = optimizer.state_dict() 
         single_task_params = dqn_agent.policy_net.parameters()
         
         # Update network
-        train(task_idx[0], dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, k_iters, goin_meta)
+        if sequential:
+            task = envs_g[task_ix]
+        else: task = task_idx[0]
+
+        print("Running task: " + str(task_ix))
+        train(task, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, k_iters, goin_meta)
         state = optimizer.state_dict()  
+        task_ix+=1
         
         if all_params == None:
             all_params = single_task_params # initialization
@@ -233,7 +241,7 @@ if __name__ == "__main__":
     val_env= gym.make("CartPole-v6")
     print(val_env)
     render = True
-    train(val_env, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, 1, True) # one-shot learning
+    train(val_env, dqn_agent, 1, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, 1, True) # one-shot learning
     
     
     """
