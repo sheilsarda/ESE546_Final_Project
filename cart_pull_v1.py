@@ -13,7 +13,7 @@ import torch.nn.functional as F
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward', 'done')) 
 
 #global params
-BATCH_SIZE = 1
+BATCH_SIZE = 16
 
 class Replay_Buffer(): 
     def __init__(self, capacity): 
@@ -59,9 +59,11 @@ class DQN_Network(nn.Module):
         """ 
 
     def forward(self, x):
-        # x = x.expand(x, dim=1) 
-        x = x.view(1, 4) 
-        # print("x shape", x.size())
+        x = x.squeeze(0) 
+        print("x shape", x)
+
+        x = x.view(4) 
+        print("x shape", x)
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
         x = F.relu(self.l3(x))
@@ -191,7 +193,7 @@ def compute_loss(memory, model, agent, optimizer):
     # print("Model        ", model(state_batch))
     # print("Action Batch", action_batch)
 
-    ix = torch.LongTensor([[action_batch[0]]])
+    ix = torch.LongTensor([[action_batch[i] for i in range(len(action_batch))]])
     # print("IX", ix)
 
     state_action_values = torch.gather(model(state_batch), 1, ix)
@@ -207,7 +209,7 @@ def compute_loss(memory, model, agent, optimizer):
     expected_state_action_values = (next_state_values * .99) + reward_batch
 
     # Compute Huber loss
-    loss = F.smooth_l1_loss(state_action_values.float(), expected_state_action_values.unsqueeze(1).float())
+    loss = F.mse_loss(state_action_values.float(), expected_state_action_values.unsqueeze(1).float())
 
     # Optimize the model
     optimizer.zero_grad()
