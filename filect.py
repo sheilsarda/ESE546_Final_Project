@@ -9,7 +9,8 @@ import torch.nn.functional as F
 from collections import namedtuple 
 import math
 import datetime
-import os 
+import os
+import pandas as pd 
  
 def save_model(model):
     out_dir = 'saved'
@@ -119,6 +120,9 @@ def train(env, dqn, episodes, optimizer, target_updates, batch_size, gamma, rend
         count = 0
         while not done:  
             if render: env.render()
+
+            # save state
+
             tensor_state = torch.FloatTensor(state).unsqueeze(0)
             action = dqn.policy_net.select_action(tensor_state)
             next_state, reward, done, _ = env.step(action)
@@ -157,8 +161,8 @@ def create_envs_g():
     envs.append(env_3)
     env_4 = gym.make("CartPole-v5")
     envs.append(env_4)
-    env_5= gym.make("CartPole-v6")
-    envs.append(env_5) 
+    
+    # Hold out CartPole-v6
     
     return envs
     
@@ -171,7 +175,7 @@ if __name__ == "__main__":
     memory_replay = Replay_Buffer(10000) 
     episodes = 1000   
     target_updates = 10
-    render = True 
+    render = False 
     save = True  
 
     #SETUP NETWORK
@@ -186,31 +190,36 @@ if __name__ == "__main__":
     #make environments
     envs_g = create_envs_g()   
 
-    all_params =d= np.random.normal(0.0, 1.0, 1000)
+    all_params = np.random.normal(0.0, 1.0, int(1e6))
     all_params = torch.FloatTensor(all_params)    
-
+    meta_step_size_final = .1
+    meta_step_size = .1 
     k_iters = 10
     meta_iters = 5 
     goin_meta = True
     for i in range(meta_iters): 
         task = random.choices(envs_g, k=1)
         train(task, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, k_iters, goin_meta)
+        
+        frac_done = i / meta_iters
+        #convex combination of meta_step_size (start, final) --> curr
+        cur_meta_step_size = frac_done * meta_step_size_final + (1 - frac_done) * meta_step_size
+        single_task_params = dqn_agent.policy_net.parameters() # na
+        all_params = all_params + cur_meta_step_size*(single_task_params.data - all_params.data)
 
-        single_task_params = dqn_agent.policy_net.named_parameters() 
-
-    epsilon = 1/learning_rate
-    all_params = all_params + epsilon*(single_task_params - all_params)
+    val_env= gym.make("CartPole-v6")
+    train(val_env, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, 1, True)
 
     
+    """
     #load models back 
     PATH = "saved/" + str() + "checkpointDQN_Model2020-12-14 200727.pt" 
     PATH_2 = "saved/checkpointDQN_Model2020-12-14 200726.pt"
     
-    """
     for name, param in dqn_agent.policy_net.named_parameters():
         print(name)
         print(param)
-    """
+    
     
     checkpoint = load_model(PATH)
     checkpoint_2 = load_model(PATH_2)
@@ -221,13 +230,9 @@ if __name__ == "__main__":
     
     check_merged = Merge(checkpoint, checkpoint_2)
     #print(check_merged)
-    """
+    
     l1_w = checkpoint['net']['l1.weight']
     l2_w = checkpoint['net']['l2.weight']
     l3_w = checkpoint['net']['l3.weight'] 
     l3_b = checkpoint['net']['l3.weight']
     """
-
-
-
-
