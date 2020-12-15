@@ -212,8 +212,7 @@ if __name__ == "__main__":
         optimizer = torch.optim.Adam(dqn_agent.policy_net.parameters(), lr=1e-4)
                 
         # Sample base task
-        # task_idx = random.choices(envs_g, k=1)   
-        # print(task_idx)
+        task_idx = random.choices(envs_g, k=1)   
         o_weights = optimizer.state_dict() 
         single_task_params = dqn_agent.policy_net.parameters()
         
@@ -222,7 +221,11 @@ if __name__ == "__main__":
             task = envs_g[task_ix]
         else: task = task_idx[0]
 
-        print("Running task: " + str(task_ix))
+        if sequential:
+            print("========> Running task " + str(task_ix))
+        else:
+            print("========> Running task " + task_idx)
+            
         train(task, dqn_agent, episodes, optimizer, target_updates, BATCH_SIZE, GAMMA, render, save, k_iters, goin_meta)
         state = optimizer.state_dict()  
         task_ix+=1
