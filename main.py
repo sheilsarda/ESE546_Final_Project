@@ -236,7 +236,7 @@ if __name__ == "__main__":
     memory_replay = Replay_Buffer(10000) 
     episodes = 500 # Tunable
     target_updates = 10
-    render = False 
+    render = True 
     save = True  
 
     #SETUP NETWORK
