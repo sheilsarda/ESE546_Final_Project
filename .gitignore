@@ -1,3 +1,17 @@
 saved/*
 images/*
 .DS_Store
+
+
+*.synctex.gz
+*.toc
+
+*.swp
+.vscode/*
+*.swo
+*.aux
+*.log
+*.out
+*ipynb_checkpoints*
+*.asv
+
